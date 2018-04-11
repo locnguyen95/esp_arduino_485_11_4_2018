@@ -75,7 +75,7 @@ void receivedata(){
   {
     a=millis()-Time1;
     Time1=millis(); 
-    if(a>=500) {j=0;}
+    if(a>=800) {j=0;}
     RxData[j]=Serial.read();
     j+=1;
     if (j==11) {FLG=0;CRC_RX(RxData,11);j=0;}
@@ -84,6 +84,7 @@ void receivedata(){
 };
       
 void setup(){
+  Time1=0;
   pinMode(MAX485_RE_NEG, OUTPUT);
   pinMode(MAX485_DE, OUTPUT);
   pinMode(0,OUTPUT);
@@ -116,47 +117,22 @@ void setup(){
   Firebase.setString("STARTup","ready"); 
 }
 
-/*
-void loop(){
 
-while (WiFi.status() == WL_CONNECTED) {
-  receivedata();
-  //while((mySerial.available()>0)){
-    //a=millis()-Time1;
-    //Time1=millis(); 
-  //if(a>=500) {i=1;}
-  //if(i>=6) {i=0;FLG=1;}
-  //RxData[i]=mySerial.read();
-  //Serial.println(RxData[i],HEX);
-  //Serial.print("*****time = ");
-    //Serial.println(a);
-  //i++;
- // }
-  if(FLG==1){
-  Firebase.setInt("Rx_0",(int)RxData[0]);
-  Firebase.setInt("Rx_1",(int)RxData[1]); 
-  Firebase.setInt("Rx_2",(int)RxData[2]); 
-  Firebase.setInt("Rx_3",(int)RxData[3]);
-  Firebase.setInt("Rx_4",(int)RxData[4]); 
-  Firebase.setInt("Rx_5",(int)RxData[5]); 
-  digitalWrite(0,HIGH);
-  }
-  if(FLG==0) digitalWrite(0,LOW);
-  // Firebase.setInt("Test",12345);
-  delay(500);
-}}
-
-*/
-///
 void loop(){          //xong,chạy ngon, nhớ nối đất chung.
+
   while (WiFi.status() == WL_CONNECTED) {
-        while (Serial.available()>0)
-  {
-    RxData[j]=Serial.read();
-    j+=1;
-    if (j==11) {FLG=0;CRC_RX(RxData,11);j=0;}}
+      receivedata();
     if(FLG==1){
       digitalWrite(0,HIGH);
+
+      String d= "DATA/";
+      d=d+dem;
+      String date=d+"/DATE";
+      String timE=d+"/TIME";
+      String hour=d+"/HOUR";
+      String minu=d+"/MINUTE";
+      String second=d+"/SECOND";
+      
       time_t rawtime;
       struct tm * timeinfo;
       char buffer [80];
@@ -167,11 +143,13 @@ void loop(){          //xong,chạy ngon, nhớ nối đất chung.
   //Firebase.setInt("DATA/"+dem+"/HOUR",(int)RxData[3]<<8|RxData[4]); 
   //Firebase.setInt("DATA/"+dem+"/MINUTE",(int)RxData[5]<<8|RxData[6]); 
   //Firebase.setInt("DATA/"+dem+"/SECOND",(int)RxData[7]<<8|RxData[8]);
-  Firebase.setInt("DATA/HOUR",(int)RxData[3]<<8|RxData[4]); 
-  Firebase.setInt("DATA/MINUTE",(int)RxData[5]<<8|RxData[6]); 
-  Firebase.setInt("DATA/SECOND",(int)RxData[7]<<8|RxData[8]);
+  Firebase.setInt(hour,(int)RxData[3]<<8|RxData[4]); 
+  Firebase.setInt(minu,(int)RxData[5]<<8|RxData[6]); 
+  Firebase.setInt(second,(int)RxData[7]<<8|RxData[8]);
   strftime (buffer,80,"%X",timeinfo);
-  Firebase.setString("DATA/TIME",buffer);
+  Firebase.setString(timE,buffer);
+  strftime (buffer,80,"%d-%m-%Y",timeinfo);
+  Firebase.setString(date,buffer);
   digitalWrite(0,LOW);
   }
   
@@ -188,10 +166,10 @@ void loop(){          //xong,chạy ngon, nhớ nối đất chung.
   Firebase.setInt("Rx_8",RxData[8]); 
   Firebase.setInt("Rx_9",RxData[9]); 
   Firebase.setInt("Rx_10",RxData[10]);
-FLG=0;
   digitalWrite(0,LOW);}
-    delay(1000);
+  
   FLG=0;
   dem++;
+
   }
   }
