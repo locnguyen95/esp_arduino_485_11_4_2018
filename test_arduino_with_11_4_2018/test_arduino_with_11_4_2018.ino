@@ -35,7 +35,7 @@ void setup()   /****** SETUP ******/
      digitalWrite(SSerialTxControl, RS485Transmit);  // Cho phép rs485 nhận dữ liệu  
     digitalWrite(3,HIGH);
 }//--(end setup )---
- 
+ ///
  
 void loop()   /****** LOOP ******/
 {     digitalWrite(SSerialTxControl, RS485Transmit);  // Cho phép rs485 nhận dữ liệu  

@@ -147,7 +147,7 @@ while (WiFi.status() == WL_CONNECTED) {
 }}
 
 */
-
+///
 void loop(){          //xong,chạy ngon, nhớ nối đất chung.
   while (WiFi.status() == WL_CONNECTED) {
         while (Serial.available()>0)
