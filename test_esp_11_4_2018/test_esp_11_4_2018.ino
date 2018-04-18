@@ -1,3 +1,5 @@
+//#include <RS485_protocol.h>
+
 #include <ESP8266WiFi.h>
 #include <time.h>
 //#include <SoftwareSerial.h>
@@ -28,13 +30,13 @@ int timezone = 7;
 int dst = 0;
 
 
-void preTransmission()
+void preTrans()
 {
   digitalWrite(MAX485_RE_NEG, HIGH);
   digitalWrite(MAX485_DE, HIGH);
 };
 
-void postTransmission()
+void postTrans()
 {
   digitalWrite(MAX485_RE_NEG, LOW);
   digitalWrite(MAX485_DE, LOW);
@@ -71,16 +73,62 @@ void CRC_RX(unsigned char Data[],unsigned char length)
 
 
 void receivedata(){
+ // postTrans();
   while (Serial.available()>0)
   {
-    a=millis()-Time1;
-    Time1=millis(); 
-    if(a>=800) {j=0;}
+    //a=millis()-Time1;
+    //Time1=millis(); 
+    //if(a>=800) {j=0;}
     RxData[j]=Serial.read();
     j+=1;
     if (j==11) {FLG=0;CRC_RX(RxData,11);j=0;}
-    
   }
+      
+  if(FLG==1){
+      digitalWrite(0,HIGH);
+
+      String d= "DATA/";
+      d=d+dem;
+      String date=d+"/DATE";
+      String timE=d+"/TIME";
+      String hour=d+"/HOUR";
+      String minu=d+"/MINUTE";
+      String second=d+"/SECOND";
+      
+      time_t rawtime;
+      struct tm * timeinfo;
+      char buffer [80];
+      time (&rawtime);
+      timeinfo = localtime (&rawtime);
+      strftime (buffer,80,"%X",timeinfo);
+      Firebase.setString(timE,buffer);
+      Firebase.setString("STARTup","ok"); 
+      Firebase.setInt(hour,(int)RxData[3]<<8|RxData[4]); 
+      Firebase.setInt(minu,(int)RxData[5]<<8|RxData[6]); 
+      Firebase.setInt(second,(int)RxData[7]<<8|RxData[8]);
+      strftime (buffer,80,"%d-%m-%Y",timeinfo);
+      Firebase.setString(date,buffer);
+      Firebase.setInt("numberdata",dem);
+      digitalWrite(0,LOW);
+      }
+  
+      if(FLG==0) //digitalWrite(0,LOW);
+      {Firebase.setString("STARTup","fail"); 
+      Firebase.setInt("Rx0",RxData[0]); 
+      Firebase.setInt("Rx1",RxData[1]); 
+      Firebase.setInt("Rx2",RxData[2]); 
+      Firebase.setInt("Rx3",RxData[3]); 
+      Firebase.setInt("Rx4",RxData[4]); 
+      Firebase.setInt("Rx5",RxData[5]); 
+      Firebase.setInt("Rx6",RxData[6]); 
+      Firebase.setInt("Rx7",RxData[7]); 
+      digitalWrite(0,LOW);
+      dem--;}
+ 
+      FLG=0;
+      dem++;
+     // preTrans();
+  
 };
       
 void setup(){
@@ -95,6 +143,7 @@ void setup(){
   digitalWrite(MAX485_RE_NEG, 0);
   digitalWrite(MAX485_DE, 0);
     Serial.begin(9600);
+    //Serial.swap();
   //mySerial.begin(9600);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   //Serial.print("connecting");
@@ -115,61 +164,17 @@ void setup(){
       
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.setString("STARTup","ready"); 
+  dem= Firebase.getInt("numberdata")+1;
 }
 
 
 void loop(){          //xong,chạy ngon, nhớ nối đất chung.
 
   while (WiFi.status() == WL_CONNECTED) {
+
+     // preTrans();
+      Serial.write("@");
       receivedata();
-    if(FLG==1){
-      digitalWrite(0,HIGH);
-
-      String d= "DATA/";
-      d=d+dem;
-      String date=d+"/DATE";
-      String timE=d+"/TIME";
-      String hour=d+"/HOUR";
-      String minu=d+"/MINUTE";
-      String second=d+"/SECOND";
-      
-      time_t rawtime;
-      struct tm * timeinfo;
-      char buffer [80];
-      time (&rawtime);
-      timeinfo = localtime (&rawtime);
-      Firebase.setString("STARTup","ok"); 
-      //String chuoi =strcpy( "DATA/",String(dem));
-  //Firebase.setInt("DATA/"+dem+"/HOUR",(int)RxData[3]<<8|RxData[4]); 
-  //Firebase.setInt("DATA/"+dem+"/MINUTE",(int)RxData[5]<<8|RxData[6]); 
-  //Firebase.setInt("DATA/"+dem+"/SECOND",(int)RxData[7]<<8|RxData[8]);
-  Firebase.setInt(hour,(int)RxData[3]<<8|RxData[4]); 
-  Firebase.setInt(minu,(int)RxData[5]<<8|RxData[6]); 
-  Firebase.setInt(second,(int)RxData[7]<<8|RxData[8]);
-  strftime (buffer,80,"%X",timeinfo);
-  Firebase.setString(timE,buffer);
-  strftime (buffer,80,"%d-%m-%Y",timeinfo);
-  Firebase.setString(date,buffer);
-  digitalWrite(0,LOW);
-  }
-  
-  if(FLG==0) //digitalWrite(0,LOW);
-  {Firebase.setString("STARTup","fail"); 
-  Firebase.setInt("Rx_0",RxData[0]); 
-  Firebase.setInt("Rx_1",RxData[1]); 
-  Firebase.setInt("Rx_2",RxData[2]);
-  Firebase.setInt("Rx_3",RxData[3]); 
-  Firebase.setInt("Rx_4",RxData[4]); 
-  Firebase.setInt("Rx_5",RxData[5]);
-  Firebase.setInt("Rx_6",RxData[6]); 
-  Firebase.setInt("Rx_7",RxData[7]);
-  Firebase.setInt("Rx_8",RxData[8]); 
-  Firebase.setInt("Rx_9",RxData[9]); 
-  Firebase.setInt("Rx_10",RxData[10]);
-  digitalWrite(0,LOW);}
-  
-  FLG=0;
-  dem++;
-
-  }
+      delay(2000);
+    }
   }
